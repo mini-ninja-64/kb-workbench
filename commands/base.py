@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Literal, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 
 class ResourcesDict(TypedDict, total=True):

@@ -2,6 +2,11 @@ from commands.base import ResourcesDict
 from .base import BaseCommand
 import FreeCADGui
 import FreeCAD
+import PartDesign
+import Part
+import typing
+import object_proxies.plate
+import plugin_utils
 
 
 class GeneratePlateCommand(BaseCommand):
@@ -13,21 +18,18 @@ class GeneratePlateCommand(BaseCommand):
         }
 
     def Activated(self):
-        print("Generating plate")
-        active_body = FreeCADGui.ActiveDocument.ActiveView.getActiveObject("pdbody")
+        active_document = FreeCAD.activeDocument()
+        if active_document is None:
+            # TODO: log
+            return
 
-        if active_body is None:
-            # insert anywhere
-            pass
-        else:
-            # insert into active body
-            pass
-        plate_object = FreeCAD.ActiveDocument.addObjects("Part::Part2DObject", "Plate")
-        FreeCAD.ActiveDocument.ActiveObject.addObject(plate_object)
+        (_, document_obj) = object_proxies.plate.PlateProxy.create(active_document)
+
+        plugin_utils.try_add_to_body(document_obj, plugin_utils.get_active_body())
 
     def IsActive(self) -> bool:
-        # TODO: Proper checks
-        return True
+        active_document = FreeCAD.ActiveDocument
+        return active_document is not None
 
 
 COMMAND_NAME = "Generate_Plate_Command"
