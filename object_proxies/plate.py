@@ -6,6 +6,7 @@ import typing
 
 from abc import ABC, abstractmethod
 from keyboard_layout_editor.parser import parseKLE, Vector, Key
+from keyboard_utilities.stab import stab_for_key_size, stab_family_type
 from object_proxies import base
 
 
@@ -53,6 +54,21 @@ class PlateProxy(base.BaseProxy):
             group="Keyboard Plate",
             doc="The fillet radius of a cutout",
         ).CutoutFilletRadius = "0.5mm"  # type: ignore
+        document_object.addProperty(
+            type="App::PropertyEnumeration",
+            name="StabilizerType",
+            group="Keyboard Plate",
+            doc="The type of stabilizer to use",
+            enum_vals=["None", "CherryMX"],
+        ).StabilizerType = "CherryMX"  # type: ignore
+        # TODO: Future feature
+        document_object.addProperty(
+            type="App::PropertyEnumeration",
+            name="AcousticCutouts",
+            group="Keyboard Plate",
+            doc="The type of acoustic cutouts to use",
+            enum_vals=["None"],
+        ).StabilizerType = "None"  # type: ignore
         return (proxy, internal_obj)
 
     def onChanged(self, feature, prop):
@@ -70,14 +86,12 @@ class PlateProxy(base.BaseProxy):
 
         cutout_radius = as_mm(feature.getPropertyByName("CutoutFilletRadius"))  # type: ignore
 
+        stab_family = as_stab_family(feature.getPropertyByName("StabilizerType"))  # type: ignore
+
         layout = parseKLE(kle_value, spacing=spacing)
         print(layout)
         primitives: PrimitiveContainer = PrimitiveContainer([])
 
-        if len(layout.keys) == 0:
-            # TODO: HANDLE PROPERYL
-            feature.Shape = None
-            return
         plate_offset = -layout.keys[0].physical_centre
         for key in layout.keys:
             # FreeCAD uses inverted y-coords
@@ -85,6 +99,8 @@ class PlateProxy(base.BaseProxy):
                 Decimal(1), Decimal(-1)
             )
             cutout = RoundedRect(key_vec, cutout_radius, cutout_width, cutout_height)
+            if stab_family is not None:
+                stab = stab_for_key_size(key.w, stab_family)
             primitives.primitives += cutout.as_primitives().primitives
 
         feature.Shape = Part.makeCompound(primitives.as_shapes())
@@ -106,6 +122,12 @@ def as_mm(quant: FreeCAD.Units.Quantity) -> Decimal:
 
 def as_freecad_vector(vec: Vector) -> FreeCAD.Vector:
     return FreeCAD.Vector(float(vec.x), float(vec.y), 0)
+
+
+def as_stab_family(string: str) -> typing.Optional[stab_family_type]:
+    if string == "CherryMx":
+        return "cherry_mx"
+    return None
 
 
 class Primitive(ABC):

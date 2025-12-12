@@ -4,9 +4,9 @@ import FreeCADGui
 class KeyboardWorkbench(FreeCADGui.Workbench):
     import plugin_utils
 
-    MenuText = "Keyboard Workbench"
-    ToolTip = "idk"
-    Icon = f"{plugin_utils.get_plugin_path()}/resources/cat.jpg"
+    MenuText = "Keyboard"
+    ToolTip = "Keyboard"
+    Icon = f"{plugin_utils.get_plugin_path()}/resources/wb-icon-small.png"
 
     def Initialize(self):
         """This function is executed when the workbench is first activated.
@@ -16,7 +16,7 @@ class KeyboardWorkbench(FreeCADGui.Workbench):
 
         self.list = [commands.plate.register()]
         self.appendToolbar(
-            "My Commands", self.list
+            "Keyboard Tools", self.list
         )  # creates a new toolbar with your commands
         # self.appendMenu("My New Menu", self.list)  # creates a new menu
         # self.appendMenu(
