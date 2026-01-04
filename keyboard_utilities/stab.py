@@ -2,7 +2,10 @@ import typing
 
 from decimal import Decimal
 from dataclasses import dataclass
-from enum import Enum
+
+from keyboard_layout_editor.parser import Key
+from shapes.core import Dimension, Vector
+from shapes.geometry import BaseGeom, RoundedRect
 
 
 @dataclass
@@ -11,6 +14,7 @@ class KeyboardStab: ...
 
 @dataclass
 class CentreToCentreKeyboardStab(KeyboardStab):
+    centre: Vector
     width_mm: Decimal
     vertical_offset_mm: Decimal
 
@@ -26,16 +30,22 @@ standard_stabilizer_widths = typing.Literal[
 ]
 
 
-def cherry_mx_stab(width: Decimal) -> CentreToCentreKeyboardStab:
-    return CentreToCentreKeyboardStab(
+def cherry_mx_stab(
+    width: Decimal,
+) -> typing.Callable[[Vector], CentreToCentreKeyboardStab]:
+    return lambda key_centre: CentreToCentreKeyboardStab(
+        centre=key_centre,
         width_mm=width,
         vertical_offset_mm=Decimal("1.25"),
     )
 
 
+stab_generator_type = typing.Callable[[Vector], KeyboardStab]
 stab_family_type = typing.Literal["cherry_mx"]
 stab_type_type = typing.Literal["std", "signature_plastics"]
-stab_family_lookup_type = dict[stab_family_type, dict[stab_type_type, KeyboardStab]]
+stab_family_lookup_type = dict[
+    stab_family_type, dict[stab_type_type, stab_generator_type]
+]
 
 stab_lookup: dict[standard_stabilizer_widths, stab_family_lookup_type] = {
     "2u": {"cherry_mx": {"std": cherry_mx_stab(Decimal("23.876"))}},
@@ -53,12 +63,16 @@ stab_lookup: dict[standard_stabilizer_widths, stab_family_lookup_type] = {
 
 
 def stab_for_key_size(
-    key_size: typing.Tuple[Decimal, Decimal],
+    physical_centre: Vector,
+    key_dimension: Dimension,
     stab_family: stab_family_type,
     stab_type: stab_type_type = "std",
-) -> typing.Optional[KeyboardStab]:
+) -> typing.Optional[CentreToCentreKeyboardStab]:
     stab_size: typing.Optional[str] = None
-    #
+    # TODO: handle vertical stabs
+    # vertical = height > width
+    key_size = max(key_dimension.width, key_dimension.height)
+
     if key_size >= Decimal("2") and key_size < Decimal("3"):
         stab_size = "2u"
     elif key_size == Decimal("3"):
@@ -75,4 +89,28 @@ def stab_for_key_size(
     if stab_size is None:
         return None
 
-    return stab_lookup[stab_size][stab_family][stab_type]
+    return stab_lookup[stab_size][stab_family][stab_type](physical_centre)
+
+
+def as_geometry(
+    stab: CentreToCentreKeyboardStab,
+    cutout_dimensions: Dimension,
+    fillet_radius: Decimal,
+) -> list[BaseGeom]:
+    cutout_width = cutout_dimensions.width
+    cutout_height = cutout_dimensions.height
+    stab_half = stab.width_mm / 2
+    return [
+        RoundedRect(
+            centre=stab.centre - Vector(stab_half, stab.vertical_offset_mm),
+            fillet_radius=fillet_radius,
+            width=cutout_width,
+            height=cutout_height,
+        ),
+        RoundedRect(
+            centre=stab.centre + Vector(stab_half, -stab.vertical_offset_mm),
+            fillet_radius=fillet_radius,
+            width=cutout_width,
+            height=cutout_height,
+        ),
+    ]

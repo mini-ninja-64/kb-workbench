@@ -15,6 +15,10 @@ def get_plugin_path() -> Path:
     return Path(os.path.dirname(os.path.realpath(__file__)))
 
 
+def get_plugin_resource(p: str) -> str:
+    return f"{get_plugin_path()}/resources/{p}"
+
+
 def try_add_to_body(
     document_obj: FreeCAD.DocumentObject, body: "PartDesign.Body | None"
 ) -> bool:

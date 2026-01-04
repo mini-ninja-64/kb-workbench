@@ -1,14 +1,10 @@
+from dataclasses import dataclass
 import FreeCAD
-import FreeCADGui
 import typing
 import Part
-import PartDesign
 from abc import ABC, abstractmethod
 
 T = typing.TypeVar("T", bound=FreeCAD.DocumentObject)
-
-
-# , typing.Generic[T]
 
 
 class BaseProxy(ABC):
@@ -21,3 +17,11 @@ class BaseProxy(ABC):
     def onChanged(self, feature: Part.Feature, prop: str):
         """Do something when doing a recomputation, this method is mandatory"""
         ...
+
+
+@dataclass
+class CustomIconViewProxy:
+    icon: str
+
+    def getIcon(self) -> str:
+        return self.icon

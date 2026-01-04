@@ -7,6 +7,8 @@ from plugin_utils import with_type
 
 from dataclasses import dataclass
 
+from shapes.core import Vector
+
 
 class SettingScope:
     Global = 0  # Effects all subsequent keys
@@ -97,24 +99,6 @@ settings = {
 
 
 @dataclass
-class Vector:
-    x: Decimal
-    y: Decimal
-
-    def __mul__(self, other: "Vector") -> "Vector":
-        return Vector(self.x * other.x, self.y * other.y)
-
-    def __sub__(self, other: "Vector") -> "Vector":
-        return Vector(self.x - other.x, self.y - other.y)
-
-    def __add__(self, other: "Vector") -> "Vector":
-        return Vector(self.x + other.x, self.y + other.y)
-
-    def __neg__(self) -> "Vector":
-        return Vector(-self.x, -self.y)
-
-
-@dataclass
 class Key:
     x: Decimal
     y: Decimal
@@ -156,6 +140,9 @@ class KeyboardLayout:
     spacing: Decimal
     keys: list[Key]
 
+    def has_keys(self):
+        return len(self.keys) > 0
+
 
 def parseKLE(string: str, spacing: Decimal = Decimal("19.05")) -> KeyboardLayout:
     kleJSON = json.loads(string)
@@ -164,7 +151,7 @@ def parseKLE(string: str, spacing: Decimal = Decimal("19.05")) -> KeyboardLayout
     y = Decimal("0")
     for keyset in kleJSON:
         if type(keyset) is dict:
-            # todo: handling author info etc in keyboard layout class
+            # TODO: handling author info etc in keyboard layout class
             continue
         elif type(keyset) is list:
             x = Decimal("0")

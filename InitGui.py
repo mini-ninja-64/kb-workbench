@@ -6,7 +6,7 @@ class KeyboardWorkbench(FreeCADGui.Workbench):
 
     MenuText = "Keyboard"
     ToolTip = "Keyboard"
-    Icon = f"{plugin_utils.get_plugin_path()}/resources/wb-icon-small.png"
+    Icon = plugin_utils.get_plugin_resource("wb-icon-small.png")
 
     def Initialize(self):
         """This function is executed when the workbench is first activated.
